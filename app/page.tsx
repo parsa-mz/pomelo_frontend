@@ -4,6 +4,11 @@ import React, { useState } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
+
+const JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiRVNGVFoiLCJleHAiOjE2OTkzMDY1ODF9.b113FzuMu1_xXDFAdWcD6-6T5wDqjud9A3r96vAuhYw";
+const SERVER = "http://localhost:8000";
+
+
 const transformResponseToString = (data : any) => {
   let resultStr = `Available Credit: ${data.available_credit}\n`;
   resultStr += `Payable Balance: ${data.payable_balance}\n`;
@@ -32,6 +37,8 @@ const transformResponseToString = (data : any) => {
 
 
 
+
+
 function TransactionApp() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -39,6 +46,31 @@ function TransactionApp() {
 
   const handleInputChange = (e: any) => {
     setInput(e.target.value);
+  };
+  const clearTransactions = async () => {
+    setIsLoading(true);
+
+    try {
+      const backendResponse = await fetch(`${SERVER}/api/transactions/clear`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + JWT
+        },
+      });
+
+      if (!backendResponse.ok) {
+        throw new Error(`Backend returned code ${backendResponse.status}, message: ${backendResponse.statusText}`);
+      }
+
+      setInput(''); // Clear the input
+      setBackendResult(''); // Clear the backend result
+
+    } catch (error) {
+      console.error("Error calling API:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const onSubmit = async (e: any) => {
@@ -50,8 +82,6 @@ function TransactionApp() {
 
     const payload = events
 
-    const JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiRVNGVFoiLCJleHAiOjE2OTkzMDY1ODF9.b113FzuMu1_xXDFAdWcD6-6T5wDqjud9A3r96vAuhYw";
-    const SERVER = "http://localhost:8000";
     try {
       const backendResponse = await fetch(`${SERVER}/api/transactions/summarize`, {
         method: 'POST',
@@ -83,7 +113,6 @@ function TransactionApp() {
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
       <Header />
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
-
         <h3 className="sm:text-4xl text-2xl max-w-[708px] font-bold text-slate-900">
           Transaction App
         </h3>
@@ -97,18 +126,26 @@ function TransactionApp() {
           />
           {!isLoading && (
             <button
-              className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+              className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-8 hover:bg-black/80 w-full"
               type="submit"
             >
               Submit &rarr;
             </button>
           )}
+          {!isLoading && (
+            <button
+              onClick={clearTransactions} 
+              className="bg-red-500 rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-8 hover:bg-red-400 w-full"
+            >
+              Clear Transactions
+            </button>
+          )}
           {isLoading && (
             <button
-              className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+              className="bg-gray-500 rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-8 w-full"
               disabled
             >
-              Loading...
+              Processing...
             </button>
           )}
         </form>
@@ -127,6 +164,7 @@ function TransactionApp() {
       <Footer />
     </div>
   );
+  
 }
 
 export default TransactionApp;
